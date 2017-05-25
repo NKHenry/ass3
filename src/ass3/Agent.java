@@ -89,7 +89,7 @@ public class Agent {
 
      // REPLACE THIS CODE WITH AI TO CHOOSE ACTION
     updateMap(view);
-     
+    printMap(); 
     int ch = 1;     
      
     
@@ -97,9 +97,17 @@ public class Agent {
        searching = false;
        this.todo = djikstra(new Point(this.rowPos, this.colPos), new Point(START,START));
     }
-    
+    if (found_axe && !have_axe) {
+       //this.todo = explore('a');
+       //if (this.todo == "") {
+          this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'a');
+       //}
+    }
     if (searching && todo.length() == 0) {
-        this.todo = explore();
+        this.todo = explore('z');
+        if (this.todo == "") {
+           this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'z');
+        }
         System.out.println(todo);
         //searching = false;
     }
@@ -110,14 +118,23 @@ public class Agent {
         boolean legal = test.apply(c);
         if (legal && !test.game_lost) {
            apply(c);
-           printMap();
+           //printMap();
            return c;
         }
         if (todo.length() == 0 && have_treasure) {
            this.todo = djikstra(new Point(this.rowPos, this.colPos), new Point(START,START));
         }
+        if (found_axe && !have_axe) {
+           this.todo = explore('a');
+           if (this.todo == "") {
+              this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'a');
+           }
+        }
         if (todo.length() == 0 && searching) {
-           todo = explore();
+           todo = explore('z');
+           if (this.todo == "") {
+              this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'a');
+           }
         }
      
     }
@@ -167,7 +184,6 @@ public class Agent {
      PriorityQueue<Node> q = new PriorityQueue<Node>();
      
      int moves[][] = {{-1,0}, {1,0}, {0,-1}, {0,1}};
-     int directions[] = {NORTH, SOUTH, WEST, EAST};
      int j;
      
      Node first = new Node(start, 0, 0);
@@ -247,57 +263,93 @@ public class Agent {
      return actions;
   }
   
-  String getHome() {
-     int initRow = this.rowPos;
-     int initCol = this.colPos;
-     char actions[] = "frl".toCharArray();
-     int maxPops = 5000;
-     int i = 0;
+  String naiveDjikstra(Point start, char goal) {
+     HashMap<Point, Point> from = new HashMap<Point,Point>();
+     HashMap<Point, Integer> dist = new HashMap<Point, Integer>();
+     HashSet<Point> visited = new HashSet<Point>();
+     PriorityQueue<Node> q = new PriorityQueue<Node>();
      
-     PriorityQueue<HomeNode> q = new PriorityQueue<HomeNode>();
-     Agent first = this.cloneAgent();
-     first.moveHistory = "";
-     HomeNode h = new HomeNode(first, initRow, initCol, START, START);
-     q.add(h);
-     HashSet<String> visited = new HashSet<String>();
+     int moves[][] = {{-1,0}, {1,0}, {0,-1}, {0,1}};
+     int j;
      
+     Node first = new Node(start, 0, 0);
+     Node curr = first;
+     dist.put(start, 0);
+     q.add(first);
      
-     while (!q.isEmpty() && i < maxPops) {
-        h = q.poll();
-        int hRow = h.getA().getRowPos();
-        int hCol = h.getA().getColPos();
-        if (hRow == START && hCol == START) {
+     while (!q.isEmpty()) {
+        curr = q.poll();
+        
+        if (map[(int) curr.getPos().getX()][(int) curr.getPos().getY()] == goal) {
            break;
         }
+        if (visited.contains(curr.getPos())) {
+           continue;
+        }
+        visited.add(curr.getPos());
         
-        visited.add(Integer.toString(hRow) + ":" + Integer.toString(hCol));
-        
-        for (char c : actions) {
-           Agent current = h.getA().cloneAgent();
-           boolean legal = current.apply(c);
-           String curPos = Integer.toString(current.rowPos) + ":" + Integer.toString(current.colPos);
-
-           if (legal && !current.game_lost) {
-              if (!(c == 'f' && visited.contains(curPos))) {
-                 current.moveHistory += c;
-                 HomeNode toAdd = new HomeNode(current, initRow, initCol, START, START);
+        for (j=0; j < 4; j++) {
+           int x = (int) curr.getPos().getX() + moves[j][0];
+           int y = (int) curr.getPos().getY() + moves[j][1];
+           if (canMove(x,y)) {
+              Point p = new Point(x,y);
+              Node toAdd = new Node(p, curr.getCost()+1, 0);
+              if (!(from.containsKey(p) && dist.get(p) < toAdd.getCost())) {
+                 from.put(p, curr.getPos());
+                 dist.put(p, toAdd.getCost());
                  q.add(toAdd);
               }
+              //System.out.println("added point " + p.toString());
            }
+        }   
+     }
+     
+     Point rewind = curr.getPos();
+     ArrayList<Point> path = new ArrayList<Point>();
+     //path.add(rewind);
+     while (!rewind.equals(start)) {
+        path.add(0,rewind);
+        rewind = from.get(rewind);
+     }
+     
+     int dRow;
+     int dCol;
+     Agent a = this.cloneAgent();
+     String actions = "";
+     String turn = "";
+     for (Point pos : path) {
+        System.out.println(pos.toString());
+        System.out.println(a.dir);
+        dRow = (int) pos.getX() - a.getRowPos();
+        dCol = (int) pos.getY() - a.getColPos();
+        if (dRow == -1) {
+          System.out.println(NORTH);
+           turn = a.moveSquare(NORTH);
         }
-        i ++;
+        else if (dRow == 1) {
+          System.out.println(SOUTH);
+           turn = a.moveSquare(SOUTH);
+        }
+        else if (dCol == -1) {
+          System.out.println(WEST);
+           turn = a.moveSquare(WEST);
+        }
+        else if (dCol == 1) {
+          System.out.println(EAST);
+           turn = a.moveSquare(EAST);
+        }
+        for (char c : turn.toCharArray()) {
+           a.apply(c);
+        }
+        System.out.println(turn);
+        actions += turn;
+        
      }
-     
-     if (i == maxPops) {
-        System.out.println("hit maxPops");
-        return "";
-     }
-     
-     return h.getA().moveHistory;
+
+     return actions;
   }
- 
   
-  String explore() {
+  String explore(char goal) {
       int initRow = this.rowPos;
       int initCol = this.colPos;
       char actions[] = "frlcb".toCharArray();
@@ -310,28 +362,28 @@ public class Agent {
       ExploreNode e = new ExploreNode(first, initRow, initCol);
       q.add(e);
       
-      HashSet<String> visited = new HashSet<String>();
+      //HashSet<String> visited = new HashSet<String>();
       
       while (!q.isEmpty() && i < maxPops) {
          e = q.poll();
          int eRow = e.getA().getRowPos();
          int eCol = e.getA().getColPos();
-         if (map[eRow][eCol] == 'z') {
+         if (map[eRow][eCol] == goal) {
             break;
          }
          
-         visited.add(Integer.toString(eRow) + ":" + Integer.toString(eCol));
+         //visited.add(Integer.toString(eRow) + ":" + Integer.toString(eCol));
          
          for (char c : actions) {
             Agent current = e.getA().cloneAgent();
             boolean legal = current.apply(c);
-            String curPos = Integer.toString(current.rowPos) + ":" + Integer.toString(current.colPos);
+            //String curPos = Integer.toString(current.rowPos) + ":" + Integer.toString(current.colPos);
             if (legal && !current.game_lost) {
-               if (!(c == 'f' && visited.contains(curPos))) {
+               //if (!(c == 'f' && visited.contains(curPos))) {
                   current.moveHistory += c;
                   ExploreNode toAdd = new ExploreNode(current, initRow, initCol);
                   q.add(toAdd);
-               }
+               //}
             }
          }
          i ++;
@@ -470,7 +522,7 @@ public class Agent {
            }
            new_row = rowPos + d_row;
            new_col = colPos + d_col;
-
+           System.out.println("new_row = " + new_row + " new_col = " + new_col);
            if(  (new_row < 0)||(map[new_row][new_col] == '.')
               ||(new_col < 0)||(new_col >= map[new_row].length)) {
               if(( action == 'F' )||( action == 'f' )) {
