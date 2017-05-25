@@ -96,6 +96,9 @@ public class Agent {
     if (have_treasure && todo.length() == 0) {
        searching = false;
        this.todo = djikstra(new Point(this.rowPos, this.colPos), new Point(START,START));
+       if (this.todo == "") {
+          this.todo = naiveExplore (START,START);
+       }
     }
     if (this.todo.length() == 0 && found_treasure && !have_treasure) {
        this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), '$');
@@ -104,15 +107,12 @@ public class Agent {
        }
     }
     if (this.todo.length() == 0 && found_axe && !have_axe) {
-       //this.todo = explore('a');
-       //if (this.todo == "") {
        this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'a');
        if (this.todo == "") {
           this.todo = explore('a');
        }
-       //}
     }
-    if (searching && todo.length() == 0) {
+    if (todo.length() == 0) {
         this.todo = explore('z');
         if (this.todo == "") {
            this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'z');
@@ -144,10 +144,10 @@ public class Agent {
               this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'a');
            }
         }
-        if (todo.length() == 0 && searching) {
+        if (todo.length() == 0) {
            todo = explore('z');
            if (this.todo == "") {
-              this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'a');
+              this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'z');
            }
         }
      
@@ -200,14 +200,14 @@ public class Agent {
      int moves[][] = {{-1,0}, {1,0}, {0,-1}, {0,1}};
      int j;
      int i = 0;
-     int maxPops = 1000;
+     int maxPops = 5000;
      
      Node first = new Node(start, 0, 0);
      Node curr = first;
      dist.put(start, 0);
      q.add(first);
      
-     while (!q.isEmpty()) {
+     while (!q.isEmpty() && i < maxPops) {
         curr = q.poll();
         
         if (curr.getPos().equals(goal)) {
@@ -231,7 +231,11 @@ public class Agent {
               }
               //System.out.println("added point " + p.toString());
            }
-        }   
+        }
+        i ++;
+        if (q.isEmpty()) {
+           i = maxPops;
+        }
      }
      
      if (i == maxPops) {
@@ -291,7 +295,7 @@ public class Agent {
      
      int moves[][] = {{-1,0}, {1,0}, {0,-1}, {0,1}};
      int j;
-     int maxPops = 1000;
+     int maxPops = 5000;
      int i =0;
      
      Node first = new Node(start, 0, 0);
@@ -324,6 +328,9 @@ public class Agent {
               //System.out.println("added point " + p.toString());
            }
         }
+        if (q.isEmpty()) {
+           i = maxPops;
+        }
         i ++;
      }
      
@@ -345,7 +352,6 @@ public class Agent {
      String turn = "";
      for (Point pos : path) {
         System.out.println(pos.toString());
-        System.out.println(a.dir);
         dRow = (int) pos.getX() - a.getRowPos();
         dCol = (int) pos.getY() - a.getColPos();
         if (dRow == -1) {
@@ -367,7 +373,7 @@ public class Agent {
         for (char c : turn.toCharArray()) {
            a.apply(c);
         }
-        System.out.println(turn);
+        //System.out.println(turn);
         actions += turn;
         
      }
@@ -397,6 +403,9 @@ public class Agent {
          if (map[eRow][eCol] == goal) {
             break;
          }
+         if (map[eRow][eCol] == 'z' && goal != 'z') {
+            continue;
+         }
          
          //visited.add(Integer.toString(eRow) + ":" + Integer.toString(eCol));
          
@@ -423,6 +432,57 @@ public class Agent {
       
       return e.getA().moveHistory;
   }
+  
+  String naiveExplore(int rowGoal , int colGoal) {
+     int initRow = this.rowPos;
+     int initCol = this.colPos;
+     char actions[] = "frlcb".toCharArray();
+     int maxPops = 5000;
+     int i = 0;
+
+     PriorityQueue<ExploreNode> q = new PriorityQueue<ExploreNode>();
+     Agent first = this.cloneAgent();
+     first.moveHistory = "";
+     ExploreNode e = new ExploreNode(first, initRow, initCol);
+     q.add(e);
+     
+     //HashSet<String> visited = new HashSet<String>();
+     
+     while (!q.isEmpty() && i < maxPops) {
+        e = q.poll();
+        int eRow = e.getA().getRowPos();
+        int eCol = e.getA().getColPos();
+        if (eRow == rowGoal && eCol == colGoal) {
+           break;
+        }
+        if (map[eRow][eCol] == 'z') {
+           continue;
+        }
+        //visited.add(Integer.toString(eRow) + ":" + Integer.toString(eCol));
+        
+        for (char c : actions) {
+           Agent current = e.getA().cloneAgent();
+           boolean legal = current.apply(c);
+           //String curPos = Integer.toString(current.rowPos) + ":" + Integer.toString(current.colPos);
+           if (legal && !current.game_lost) {
+              //if (!(c == 'f' && visited.contains(curPos))) {
+                 current.moveHistory += c;
+                 ExploreNode toAdd = new ExploreNode(current, initRow, initCol);
+                 q.add(toAdd);
+              //}
+           }
+        }
+        i ++;
+     }
+     
+     if (i == maxPops) {
+        System.out.println("hit maxPops");
+        return "";
+     }
+     
+     
+     return e.getA().moveHistory;
+ }
 
   
   
@@ -548,7 +608,6 @@ public class Agent {
            }
            new_row = rowPos + d_row;
            new_col = colPos + d_col;
-           System.out.println("new_row = " + new_row + " new_col = " + new_col);
            if(  (new_row < 0)||(map[new_row][new_col] == '.')
               ||(new_col < 0)||(new_col >= map[new_row].length)) {
               if(( action == 'F' )||( action == 'f' )) {
