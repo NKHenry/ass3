@@ -97,10 +97,19 @@ public class Agent {
        searching = false;
        this.todo = djikstra(new Point(this.rowPos, this.colPos), new Point(START,START));
     }
-    if (found_axe && !have_axe) {
+    if (this.todo.length() == 0 && found_treasure && !have_treasure) {
+       this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), '$');
+       if (this.todo == "") {
+          this.todo = explore ('$');
+       }
+    }
+    if (this.todo.length() == 0 && found_axe && !have_axe) {
        //this.todo = explore('a');
        //if (this.todo == "") {
-          this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'a');
+       this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'a');
+       if (this.todo == "") {
+          this.todo = explore('a');
+       }
        //}
     }
     if (searching && todo.length() == 0) {
@@ -118,13 +127,18 @@ public class Agent {
         boolean legal = test.apply(c);
         if (legal && !test.game_lost) {
            apply(c);
-           //printMap();
            return c;
         }
         if (todo.length() == 0 && have_treasure) {
            this.todo = djikstra(new Point(this.rowPos, this.colPos), new Point(START,START));
         }
-        if (found_axe && !have_axe) {
+        if (this.todo.length() == 0 && found_treasure && !have_treasure) {
+           this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), '$');
+           if (this.todo == "") {
+              this.todo = explore ('$');
+           }
+        }
+        if (this.todo.length() == 0 && found_axe && !have_axe) {
            this.todo = explore('a');
            if (this.todo == "") {
               this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'a');
@@ -185,6 +199,8 @@ public class Agent {
      
      int moves[][] = {{-1,0}, {1,0}, {0,-1}, {0,1}};
      int j;
+     int i = 0;
+     int maxPops = 1000;
      
      Node first = new Node(start, 0, 0);
      Node curr = first;
@@ -216,6 +232,10 @@ public class Agent {
               //System.out.println("added point " + p.toString());
            }
         }   
+     }
+     
+     if (i == maxPops) {
+        return "";
      }
      
      Point rewind = curr.getPos();
@@ -271,13 +291,15 @@ public class Agent {
      
      int moves[][] = {{-1,0}, {1,0}, {0,-1}, {0,1}};
      int j;
+     int maxPops = 1000;
+     int i =0;
      
      Node first = new Node(start, 0, 0);
      Node curr = first;
      dist.put(start, 0);
      q.add(first);
      
-     while (!q.isEmpty()) {
+     while (!q.isEmpty() && i < maxPops) {
         curr = q.poll();
         
         if (map[(int) curr.getPos().getX()][(int) curr.getPos().getY()] == goal) {
@@ -301,9 +323,13 @@ public class Agent {
               }
               //System.out.println("added point " + p.toString());
            }
-        }   
+        }
+        i ++;
      }
      
+     if (i == maxPops) {
+        return "";
+     }
      Point rewind = curr.getPos();
      ArrayList<Point> path = new ArrayList<Point>();
      //path.add(rewind);
@@ -415,7 +441,7 @@ public class Agent {
    boolean canMove(int row, int col) {
        char space = map[row][col];
        switch (space) {
-          case ' ': case 'a': case 'd': case 'k':
+          case ' ': case 'a': case 'd': case 'k': case '$':
           return true;
        }
        if ((space == '~' && have_raft) || on_raft) {
