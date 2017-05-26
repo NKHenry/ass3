@@ -91,44 +91,48 @@ public class Agent {
     updateMap(view);
     printMap(); 
     int ch = 1;     
-     
     
+    if (searching && on_raft) {
+       this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'z', false, true);
+       System.out.println("water search worked");
+       if (this.todo == "") {
+          System.out.println("finished water search");
+          searching = false;
+       }
+    }
     if (have_treasure && todo.length() == 0) {
-       searching = false;
-       this.todo = djikstra(new Point(this.rowPos, this.colPos), new Point(START,START));
-       //if (this.todo == "") {
-        //  this.todo = naiveExplore (START,START);
-      // }
-    }
-    if (this.todo.length() == 0 && found_treasure && !have_treasure) {
-       this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), '$');
-       //if (this.todo == "") {
-         // this.todo = explore ('$');
-      // }
-    }
-    if (this.todo.length() == 0 && found_axe && !have_axe) {
-       this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'a');
-      // if (this.todo == "") {
-        //  this.todo = explore('a');
-       //}
+       //searching = false;
+       this.todo = djikstra(new Point(this.rowPos, this.colPos), new Point(START,START), false, false);
+       if (this.todo == "") {
+          System.out.println("have dynamites " + num_dynamites);
+          this.todo = djikstra(new Point(this.rowPos, this.colPos), new Point(START,START), true, false);
+       }
     }
     if (this.todo.length() == 0 && dynamites_seen > num_dynamites) {
-       this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'd');
-       //if (this.todo == "") {
-       //   this.todo = explore('d');
-       //}
+       this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'd', false, false);
+
+    }
+    if (this.todo.length() == 0 && found_treasure && !have_treasure) {
+       this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), '$', false, false);
+
+    }
+    if (this.todo.length() == 0 && found_axe && !have_axe) {
+       this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'a', false, false);
+       if (this.todo == "") {
+         this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'a', true, false);
+       }
     }
     
     if (todo.length() == 0) {
-        //this.todo = explore('z');
-        //if (this.todo == "") {
-           this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'z');
-        //}
-        //System.out.println(todo);
-        //searching = false;
+
+        this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'z', false, false);
+        if (this.todo == "") {
+           this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'z', true, false);
+        }
+
     }
     if (todo.length() == 0 && !have_raft && have_axe) {
-       this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'T');
+       this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'T', false, false);
     }
     
     while (this.todo.length() != 0) {
@@ -140,38 +144,45 @@ public class Agent {
            apply(c);
            return c;
         }
-        if (todo.length() == 0 && have_treasure) {
-           this.todo = djikstra(new Point(this.rowPos, this.colPos), new Point(START,START));
+        if (searching && on_raft) {
+           this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'z', false, true);
+           if (this.todo == "") {
+              System.out.println("finished water search");
+              searching = false;
+           }
         }
-        if (this.todo.length() == 0 && found_treasure && !have_treasure) {
-           this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), '$');
-           //if (this.todo == "") {
-            //  this.todo = explore ('$');
-          // }
-        }
-        if (this.todo.length() == 0 && found_axe && !have_axe) {
-           //this.todo = explore('a');
-           //if (this.todo == "") {
-              this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'a');
-           //}
+        if (have_treasure && todo.length() == 0) {
+           //searching = false;
+           this.todo = djikstra(new Point(this.rowPos, this.colPos), new Point(START,START), false, false);
+           if (this.todo == "") {
+              System.out.println("have dynamites " + num_dynamites);
+              this.todo = djikstra(new Point(this.rowPos, this.colPos), new Point(START,START), true, false);
+           }
         }
         if (this.todo.length() == 0 && dynamites_seen > num_dynamites) {
-           this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'd');
-          // if (this.todo == "") {
-          //    this.todo = explore('d');
-           //}
+           this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'd', false, false);
+
         }
+        if (this.todo.length() == 0 && found_treasure && !have_treasure) {
+           this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), '$', false, false);
+
+        }
+        if (this.todo.length() == 0 && found_axe && !have_axe) {
+           this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'a', false, false);
+           if (this.todo == "") {
+             this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'a', true, false);
+           }
+        }
+        
         if (todo.length() == 0) {
-           //todo = explore('z');
-           //if (this.todo == "") {
-              this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'z');
-           //}
+            this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'z', false, false);
+            if (this.todo == "") {
+               this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'z', true, false);
+            }
         }
         if (todo.length() == 0 && !have_raft && have_axe) {
-           this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'T');
-        }
-       
-        
+           this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'T', false, false);
+        }      
      
     }
 
@@ -213,7 +224,7 @@ public class Agent {
   }
 
 
-  String djikstra(Point start, Point goal) {
+  String djikstra(Point start, Point goal, boolean allow_d, boolean water_search) {
      HashMap<Point, Point> from = new HashMap<Point,Point>();
      HashMap<Point, Integer> dist = new HashMap<Point, Integer>();
      HashSet<Point> visited = new HashSet<Point>();
@@ -243,26 +254,26 @@ public class Agent {
         for (j=0; j < 4; j++) {
            int x = (int) curr.getPos().getX() + moves[j][0];
            int y = (int) curr.getPos().getY() + moves[j][1];
-           if (curr.getA().canMove(x,y)) {
+           if (curr.getA().canMove(x,y, allow_d, water_search)) {
               Point p = new Point(x,y);
               Agent a = curr.getA().cloneAgent();
               int dRow = x - a.getRowPos();
               int dCol = y - a.getColPos();
               String turn = "";
               if (dRow == -1) {
-                 System.out.println(NORTH);
+                 //System.out.println(NORTH);
                  turn = a.moveSquare(NORTH);
               }
               else if (dRow == 1) {
-                 System.out.println(SOUTH);
+                 //System.out.println(SOUTH);
                  turn = a.moveSquare(SOUTH);
               }
               else if (dCol == -1) {
-                 System.out.println(WEST);
+                 //System.out.println(WEST);
                  turn = a.moveSquare(WEST);
               }
               else if (dCol == 1) {
-                 System.out.println(EAST);
+                 //System.out.println(EAST);
                  turn = a.moveSquare(EAST);
               }
               for (char c : turn.toCharArray()) {
@@ -281,6 +292,7 @@ public class Agent {
         }
         if (q.isEmpty()) {
            i = maxPops;
+           break;
         }
         i ++;
      }
@@ -288,11 +300,15 @@ public class Agent {
      if (i == maxPops) {
         return "";
      }
-
+     if (!curr.getPos().equals(goal)) {
+        return "";
+     }
+     System.out.println(curr.getA().moveHistory);
+     System.out.println("dynamites remaining = " + num_dynamites);
      return curr.getA().moveHistory;
   }
   
-  String naiveDjikstra(Point start, char goal) {
+  String naiveDjikstra(Point start, char goal, boolean allow_d, boolean water_search) {
      HashMap<Point, Point> from = new HashMap<Point,Point>();
      HashMap<Point, Integer> dist = new HashMap<Point, Integer>();
      HashSet<Point> visited = new HashSet<Point>();
@@ -323,7 +339,7 @@ public class Agent {
         for (j=0; j < 4; j++) {
            int x = (int) curr.getPos().getX() + moves[j][0];
            int y = (int) curr.getPos().getY() + moves[j][1];
-           if (curr.getA().canMove(x,y) || map[x][y] == goal) {
+           if (curr.getA().canMove(x,y, allow_d, water_search) || map[x][y] == goal) {
               Point p = new Point(x,y);
               Agent a = curr.getA().cloneAgent();
               int dRow = x - a.getRowPos();
@@ -362,11 +378,16 @@ public class Agent {
         }
         if (q.isEmpty()) {
            i = maxPops;
+           break;
         }
         i ++;
      }
      
      if (i == maxPops) {
+        return "";
+     }
+     if (!(map[(int) curr.getPos().getX()][(int) curr.getPos().getY()] == goal)) {
+        System.out.println("search failed couldn't find " + goal);
         return "";
      }
      System.out.println("end pos is " + curr.getPos().toString());
@@ -509,8 +530,11 @@ public class Agent {
       return ret;
    }
   
-   boolean canMove(int row, int col) {
+   boolean canMove(int row, int col, boolean dynamites, boolean water_search) {
        char space = map[row][col];
+       if (water_search && space != '~') {
+          return false;
+       }
        if (space == '.') {
           return false;
        }
@@ -527,11 +551,11 @@ public class Agent {
        else if (space == '-' && have_key) {
           return true;
        }
-       else if (space == '*' && num_dynamites > 0) {
+       else if (space == '*' && num_dynamites > 0 && dynamites) {
           return true;
        }
        return false;
-    }
+   }
     
     Agent cloneAgent () {
        Agent a = new Agent();
