@@ -7,13 +7,19 @@ public class Node implements Comparable<Node> {
    private Point pos;
    private int cost;
    private int heuristic;
+   private Agent a;
    
-   public Node(Point p, int cst, int h) {
+   public Node(Point p, int cst, int h, Agent ag) {
       pos = p;
       cost = cst;
       heuristic = h;
+      a = ag;
    }
 
+   public Agent getA() {
+      return this.a;
+   }
+   
    public Point getPos() {
       return pos;
    }

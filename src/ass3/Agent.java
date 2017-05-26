@@ -96,36 +96,41 @@ public class Agent {
     if (have_treasure && todo.length() == 0) {
        searching = false;
        this.todo = djikstra(new Point(this.rowPos, this.colPos), new Point(START,START));
-       if (this.todo == "") {
-          this.todo = naiveExplore (START,START);
-       }
+       //if (this.todo == "") {
+        //  this.todo = naiveExplore (START,START);
+      // }
     }
     if (this.todo.length() == 0 && found_treasure && !have_treasure) {
        this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), '$');
-       if (this.todo == "") {
-          this.todo = explore ('$');
-       }
+       //if (this.todo == "") {
+         // this.todo = explore ('$');
+      // }
     }
     if (this.todo.length() == 0 && found_axe && !have_axe) {
        this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'a');
-       if (this.todo == "") {
-          this.todo = explore('a');
-       }
-    }
-    if (this.todo.length() == 0 && dynamites_seen > num_dynamites) {
-       //this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'd');
-       //if (this.todo == "") {
-          this.todo = explore('d');
+      // if (this.todo == "") {
+        //  this.todo = explore('a');
        //}
     }
+    if (this.todo.length() == 0 && dynamites_seen > num_dynamites) {
+       this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'd');
+       //if (this.todo == "") {
+       //   this.todo = explore('d');
+       //}
+    }
+    
     if (todo.length() == 0) {
-        this.todo = explore('z');
-        if (this.todo == "") {
+        //this.todo = explore('z');
+        //if (this.todo == "") {
            this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'z');
-        }
-        System.out.println(todo);
+        //}
+        //System.out.println(todo);
         //searching = false;
     }
+    if (todo.length() == 0 && !have_raft && have_axe) {
+       this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'T');
+    }
+    
     while (this.todo.length() != 0) {
         char c = todo.charAt(0);
         todo = todo.substring(1);
@@ -140,28 +145,33 @@ public class Agent {
         }
         if (this.todo.length() == 0 && found_treasure && !have_treasure) {
            this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), '$');
-           if (this.todo == "") {
-              this.todo = explore ('$');
-           }
+           //if (this.todo == "") {
+            //  this.todo = explore ('$');
+          // }
         }
         if (this.todo.length() == 0 && found_axe && !have_axe) {
-           this.todo = explore('a');
-           if (this.todo == "") {
+           //this.todo = explore('a');
+           //if (this.todo == "") {
               this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'a');
-           }
+           //}
         }
         if (this.todo.length() == 0 && dynamites_seen > num_dynamites) {
            this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'd');
-           if (this.todo == "") {
-              this.todo = explore('d');
-           }
+          // if (this.todo == "") {
+          //    this.todo = explore('d');
+           //}
         }
         if (todo.length() == 0) {
-           todo = explore('z');
-           if (this.todo == "") {
+           //todo = explore('z');
+           //if (this.todo == "") {
               this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'z');
-           }
+           //}
         }
+        if (todo.length() == 0 && !have_raft && have_axe) {
+           this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'T');
+        }
+       
+        
      
     }
 
@@ -214,7 +224,7 @@ public class Agent {
      int i = 0;
      int maxPops = 5000;
      
-     Node first = new Node(start, 0, 0);
+     Node first = new Node(start, 0, 0, this.cloneAgent());
      Node curr = first;
      dist.put(start, 0);
      q.add(first);
@@ -233,9 +243,34 @@ public class Agent {
         for (j=0; j < 4; j++) {
            int x = (int) curr.getPos().getX() + moves[j][0];
            int y = (int) curr.getPos().getY() + moves[j][1];
-           if (canMove(x,y)) {
+           if (curr.getA().canMove(x,y)) {
               Point p = new Point(x,y);
-              Node toAdd = new Node(p, curr.getCost()+1, 0);
+              Agent a = curr.getA().cloneAgent();
+              int dRow = x - a.getRowPos();
+              int dCol = y - a.getColPos();
+              String turn = "";
+              if (dRow == -1) {
+                 System.out.println(NORTH);
+                 turn = a.moveSquare(NORTH);
+              }
+              else if (dRow == 1) {
+                 System.out.println(SOUTH);
+                 turn = a.moveSquare(SOUTH);
+              }
+              else if (dCol == -1) {
+                 System.out.println(WEST);
+                 turn = a.moveSquare(WEST);
+              }
+              else if (dCol == 1) {
+                 System.out.println(EAST);
+                 turn = a.moveSquare(EAST);
+              }
+              for (char c : turn.toCharArray()) {
+                 a.apply(c);
+              }
+              a.moveHistory += turn;
+                          
+              Node toAdd = new Node(p, curr.getCost()+1, 0, a);
               if (!(from.containsKey(p) && dist.get(p) < toAdd.getCost())) {
                  from.put(p, curr.getPos());
                  dist.put(p, toAdd.getCost());
@@ -244,59 +279,17 @@ public class Agent {
               //System.out.println("added point " + p.toString());
            }
         }
-        i ++;
         if (q.isEmpty()) {
            i = maxPops;
         }
+        i ++;
      }
      
      if (i == maxPops) {
         return "";
      }
-     
-     Point rewind = curr.getPos();
-     ArrayList<Point> path = new ArrayList<Point>();
-     //path.add(rewind);
-     while (!rewind.equals(start)) {
-        path.add(0,rewind);
-        rewind = from.get(rewind);
-     }
-     
-     int dRow;
-     int dCol;
-     Agent a = this.cloneAgent();
-     String actions = "";
-     String turn = "";
-     for (Point pos : path) {
-        System.out.println(pos.toString());
-        System.out.println(a.dir);
-        dRow = (int) pos.getX() - a.getRowPos();
-        dCol = (int) pos.getY() - a.getColPos();
-        if (dRow == -1) {
-          System.out.println(NORTH);
-           turn = a.moveSquare(NORTH);
-        }
-        else if (dRow == 1) {
-          System.out.println(SOUTH);
-           turn = a.moveSquare(SOUTH);
-        }
-        else if (dCol == -1) {
-          System.out.println(WEST);
-           turn = a.moveSquare(WEST);
-        }
-        else if (dCol == 1) {
-          System.out.println(EAST);
-           turn = a.moveSquare(EAST);
-        }
-        for (char c : turn.toCharArray()) {
-           a.apply(c);
-        }
-        System.out.println(turn);
-        actions += turn;
-        
-     }
 
-     return actions;
+     return curr.getA().moveHistory;
   }
   
   String naiveDjikstra(Point start, char goal) {
@@ -310,7 +303,8 @@ public class Agent {
      int maxPops = 5000;
      int i =0;
      
-     Node first = new Node(start, 0, 0);
+     Agent n = this.cloneAgent();
+     Node first = new Node(start, 0, 0, n);
      Node curr = first;
      dist.put(start, 0);
      q.add(first);
@@ -329,9 +323,35 @@ public class Agent {
         for (j=0; j < 4; j++) {
            int x = (int) curr.getPos().getX() + moves[j][0];
            int y = (int) curr.getPos().getY() + moves[j][1];
-           if (canMove(x,y)) {
+           if (curr.getA().canMove(x,y) || map[x][y] == goal) {
               Point p = new Point(x,y);
-              Node toAdd = new Node(p, curr.getCost()+1, 0);
+              Agent a = curr.getA().cloneAgent();
+              int dRow = x - a.getRowPos();
+              int dCol = y - a.getColPos();
+              String turn = "";
+              if (dRow == -1) {
+                 //System.out.println(NORTH);
+                 turn = a.moveSquare(NORTH);
+              }
+              else if (dRow == 1) {
+                // System.out.println(SOUTH);
+                 turn = a.moveSquare(SOUTH);
+              }
+              else if (dCol == -1) {
+                 //System.out.println(WEST);
+                 turn = a.moveSquare(WEST);
+              }
+              else if (dCol == 1) {
+                 //System.out.println(EAST);
+                 turn = a.moveSquare(EAST);
+              }
+              for (char c : turn.toCharArray()) {
+                 a.apply(c);
+              }
+              a.moveHistory += turn;
+             
+              
+              Node toAdd = new Node(p, curr.getCost()+1, 0, a);
               if (!(from.containsKey(p) && dist.get(p) < toAdd.getCost())) {
                  from.put(p, curr.getPos());
                  dist.put(p, toAdd.getCost());
@@ -349,48 +369,9 @@ public class Agent {
      if (i == maxPops) {
         return "";
      }
-     Point rewind = curr.getPos();
-     ArrayList<Point> path = new ArrayList<Point>();
-     //path.add(rewind);
-     while (!rewind.equals(start)) {
-        path.add(0,rewind);
-        rewind = from.get(rewind);
-     }
-     
-     int dRow;
-     int dCol;
-     Agent a = this.cloneAgent();
-     String actions = "";
-     String turn = "";
-     for (Point pos : path) {
-        System.out.println(pos.toString());
-        dRow = (int) pos.getX() - a.getRowPos();
-        dCol = (int) pos.getY() - a.getColPos();
-        if (dRow == -1) {
-          System.out.println(NORTH);
-           turn = a.moveSquare(NORTH);
-        }
-        else if (dRow == 1) {
-          System.out.println(SOUTH);
-           turn = a.moveSquare(SOUTH);
-        }
-        else if (dCol == -1) {
-          System.out.println(WEST);
-           turn = a.moveSquare(WEST);
-        }
-        else if (dCol == 1) {
-          System.out.println(EAST);
-           turn = a.moveSquare(EAST);
-        }
-        for (char c : turn.toCharArray()) {
-           a.apply(c);
-        }
-        //System.out.println(turn);
-        actions += turn;
-        
-     }
-
-     return actions;
+     System.out.println("end pos is " + curr.getPos().toString());
+     System.out.println(curr.getA().moveHistory);
+     return curr.getA().moveHistory;
   }
   
   String explore(char goal) {
@@ -530,11 +511,17 @@ public class Agent {
   
    boolean canMove(int row, int col) {
        char space = map[row][col];
+       if (space == '.') {
+          return false;
+       }
        switch (space) {
           case ' ': case 'a': case 'd': case 'k': case '$':
           return true;
        }
-       if ((space == '~' && have_raft) || on_raft) {
+       if (space == 'T' && have_axe) {
+          return true;
+       }
+       else if ((space == '~' && have_raft) || on_raft) {
           return true;
        }
        else if (space == '-' && have_key) {
