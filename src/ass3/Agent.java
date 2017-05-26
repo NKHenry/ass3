@@ -112,6 +112,12 @@ public class Agent {
           this.todo = explore('a');
        }
     }
+    if (this.todo.length() == 0 && dynamites_seen > num_dynamites) {
+       //this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'd');
+       //if (this.todo == "") {
+          this.todo = explore('d');
+       //}
+    }
     if (todo.length() == 0) {
         this.todo = explore('z');
         if (this.todo == "") {
@@ -142,6 +148,12 @@ public class Agent {
            this.todo = explore('a');
            if (this.todo == "") {
               this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'a');
+           }
+        }
+        if (this.todo.length() == 0 && dynamites_seen > num_dynamites) {
+           this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'd');
+           if (this.todo == "") {
+              this.todo = explore('d');
            }
         }
         if (todo.length() == 0) {
@@ -489,10 +501,28 @@ public class Agent {
   
    String moveSquare(int direction) {
       String ret = "";
+      int sRow = this.rowPos;
+      int sCol = this.colPos;
+      switch (direction) {
+         case NORTH: sRow --; break;
+         case SOUTH: sRow ++; break;
+         case EAST:  sCol ++; break;
+         case WEST:  sCol --; break;
+      }
       int dirn = this.dir;
       while (dirn != direction) {
          dirn = (dirn + 1) % 4;
          ret += "l";
+      }
+      char square = map[sRow][sCol];
+      if (square == '-') {
+         ret += 'u';
+      }
+      else if (square == 'T') {
+         ret += 'c';
+      }
+      else if (square == '*') {
+         ret += 'b';
       }
       ret += "f";
       return ret;
@@ -510,6 +540,9 @@ public class Agent {
        else if (space == '-' && have_key) {
           return true;
        }
+       else if (space == '*' && num_dynamites > 0) {
+          return true;
+       }
        return false;
     }
     
@@ -522,11 +555,14 @@ public class Agent {
        
        int i;
        int j;
+       //a.map = this.map.clone();
+       
        for (i=0 ; i < 160; i++) {
           for (j=0; j< 160; j++) {
              a.map[i][j] = this.map[i][j];
           }
        }
+       
        
        a.heuristic = this.heuristic;
        a.moveHistory = this.moveHistory;
@@ -569,7 +605,7 @@ public class Agent {
           sum += 1000;
        }
        if (have_raft) {
-          sum += 50;
+          sum += 100;
        }
        if (game_lost) {
           sum -= 10000000;
@@ -577,7 +613,7 @@ public class Agent {
        if (game_won) {
           sum += 100000000;
        }
-       sum += (num_dynamites * 20); // +50
+       sum += (num_dynamites * 100); // +50
        sum -= (moveHistory.length()*10);
        heuristic = sum;
        return sum;
@@ -693,6 +729,7 @@ public class Agent {
                  case '*': case 'T': case '-':
                     map[new_row][new_col] = ' ';
                     num_dynamites --;
+                    dynamites_seen --;
                     return( true );
                  }
               }
@@ -745,9 +782,9 @@ public class Agent {
     int i,j;
 
       System.out.println("\n+-----+");
-      for( i=70; i < 90; i++ ) {
+      for( i=60; i < 120; i++ ) {
          System.out.print("|");
-         for( j=60; j < 100; j++ ) {
+         for( j=60; j < 120; j++ ) {
             if(( i == rowPos )&&( j == colPos )) {
                //System.out.print('^');
                switch (dir) {
