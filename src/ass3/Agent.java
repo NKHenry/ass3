@@ -349,7 +349,7 @@ public class Agent {
      
      int moves[][] = {{-1,0}, {1,0}, {0,-1}, {0,1}};
      int j;
-     int maxPops = 5000;
+     int maxPops = 50000;
      int i =0;
      
      Agent n = this.cloneAgent();
@@ -562,8 +562,8 @@ public class Agent {
        if (game_won) {
           sum += 100000000;
        }
-       sum += (num_dynamites * 100); // +50
-       sum -= (moveHistory.length()*10);
+       sum += (num_dynamites * 20); // +50
+       //sum -= (moveHistory.length()*10);
        heuristic = sum;
        return sum;
     }

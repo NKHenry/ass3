@@ -29,6 +29,7 @@ public class Node implements Comparable<Node> {
    }
 
    public int getHeuristic() {
+      //this.heuristic = a.updateHeuristic();
       return heuristic;
    }
 
