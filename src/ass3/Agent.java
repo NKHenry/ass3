@@ -108,7 +108,7 @@ public class Agent {
 
      // REPLACE THIS CODE WITH AI TO CHOOSE ACTION
     updateMap(view);
-    printMap(); 
+    //printMap(); 
     int ch = 1;     
     
     if (searching && on_raft) {
@@ -119,52 +119,52 @@ public class Agent {
           searching = false;
        }
     }
-    if (todo.length() == 0) {
-       this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'z', false, false);
-       /*
-       if (this.todo == "") {
-          System.out.println("have dynamites " + num_dynamites);
-          this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'z', true, false);
-       }
-       */
-
-   }
+    
     if (have_treasure && todo.length() == 0) {
        this.todo = djikstra(new Point(this.rowPos, this.colPos), new Point(START,START), false, false);
-       if (this.todo == "") {
+       if (this.todo == "" && num_dynamites > 0) {
           System.out.println("have dynamites " + num_dynamites);
           this.todo = djikstra(new Point(this.rowPos, this.colPos), new Point(START,START), true, false);
        }
     }
     if (this.todo.length() == 0 && found_key && !have_key) {
        this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'k', false, false);
-       if (this.todo == "") {
+       if (this.todo == "" && num_dynamites > 0) {
           System.out.println("have dynamites " + num_dynamites);
           this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'k', true, false);
         }
     }
     if (this.todo.length() == 0 && dynamites_seen > num_dynamites) {
        this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'd', false, false);
-       if (this.todo == "") {
+       if (this.todo == "" && num_dynamites > 0) {
           System.out.println("have dynamites " + num_dynamites);
           this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'd', true, false);
         }
     }
     if (this.todo.length() == 0 && found_axe && !have_axe) {
        this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'a', false, false);
-       if (this.todo == "") {
+       if (this.todo == "" && num_dynamites > 0) {
           System.out.println("have dynamites " + num_dynamites);
           this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'a', true, false);
        }
     }
     if (this.todo.length() == 0 && found_treasure && !have_treasure) {
        this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), '$', false, false);
-       
+       if (this.todo == "" && num_dynamites > 0) {
+          this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), '$', true, false);
+       }
     }
-    
-    
+    if (todo.length() == 0) {
+       this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'z', false, false);
+       if (this.todo == "" && num_dynamites > 0) {
+          this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'z', true, false);
+       }
+    } 
     if (todo.length() == 0 && !have_raft && have_axe) {
        this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'T', false, false);
+       if (this.todo == "" && num_dynamites > 0) {
+          this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'T', true, false);
+       }
     }
     
     while (this.todo.length() != 0) {
@@ -184,52 +184,53 @@ public class Agent {
               searching = false;
            }
         }
-        if (todo.length() == 0) {
-           this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'z', false, false);
-           /*
-           if (this.todo == "") {
-              System.out.println("have dynamites " + num_dynamites);
-              this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'z', true, false);
-           }
-           */
-       }
+        
         if (have_treasure && todo.length() == 0) {
            this.todo = djikstra(new Point(this.rowPos, this.colPos), new Point(START,START), false, false);
-           if (this.todo == "") {
+           if (this.todo == "" && num_dynamites > 0) {
               System.out.println("have dynamites " + num_dynamites);
               this.todo = djikstra(new Point(this.rowPos, this.colPos), new Point(START,START), true, false);
            }
         }
         if (this.todo.length() == 0 && found_key && !have_key) {
            this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'k', false, false);
-           if (this.todo == "") {
+           if (this.todo == "" && num_dynamites > 0) {
               System.out.println("have dynamites " + num_dynamites);
               this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'k', true, false);
             }
         }
         if (this.todo.length() == 0 && dynamites_seen > num_dynamites) {
            this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'd', false, false);
-           if (this.todo == "") {
+           if (this.todo == "" && num_dynamites > 0) {
               System.out.println("have dynamites " + num_dynamites);
               this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'd', true, false);
             }
         }
         if (this.todo.length() == 0 && found_axe && !have_axe) {
            this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'a', false, false);
-           if (this.todo == "") {
+           if (this.todo == "" && num_dynamites > 0) {
               System.out.println("have dynamites " + num_dynamites);
               this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'a', true, false);
            }
         }
         if (this.todo.length() == 0 && found_treasure && !have_treasure) {
            this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), '$', false, false);
-           
+           if (this.todo == "" && num_dynamites > 0) {
+              this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), '$', true, false);
+           }
         }
-        
-        
+        if (todo.length() == 0) {
+           this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'z', false, false);
+           if (this.todo == "" && num_dynamites > 0) {
+              this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'z', true, false);
+           }
+        } 
         if (todo.length() == 0 && !have_raft && have_axe) {
            this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'T', false, false);
-        }      
+           if (this.todo == "" && num_dynamites > 0) {
+              this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'T', true, false);
+           }
+        }     
      
     }
 
@@ -385,12 +386,11 @@ public class Agent {
         if (map[(int) curr.getPos().getX()][(int) curr.getPos().getY()] == goal) {
            if (goal == '$') {
               String homePath = curr.getA().djikstra(curr.getPos(), new Point (START,START), true, false);
-              if (homePath == "") {
-                 continue;
-              }
-              else {
+              if (!(homePath == "")) {
                  curr.getA().moveHistory += homePath;
                  break;
+              } else {
+                 continue;
               }
            }
            else {
@@ -737,7 +737,6 @@ public class Agent {
   
    void updateMap (char view[][]) 
    {
-     System.out.println("updating map");
      int i; 
      int j;
      for (i=0; i < 5; i ++) {
