@@ -4,24 +4,35 @@
  *  COMP3411 Artificial Intelligence
  *  UNSW Session 1, 2017
  *  
- *  Program Description
- *  
- *  My Agent uses the following broad techniques to 
+ *  Program Description 
  *  
  *  The primary search algorithm used is djikstra's, I implemented
  *  two versions of this; 1 searches for a specific point e.g.(80,80), the
- *  other searches for any space that contains a particular value.
+ *  other searches for any space that contains a particular value e.g. 'a'.
+ *  I attempted to modify my search into an A* but found that adding non 0 heuristics
+ *  were 
+ *  
+ *  My overarching strategy is to search the map as much as possible and gather
+ *  the most amount of information possible before attempting to reach the gold. 
+ *  When picking a goal to search for the agent looks at the objects it has seen
+ *  and will attempt to reach the most valuable goal. If a search fails the goal 
+ *  will be adjusted and the search is run again.
  *  
  *  The Agent class holds similar information to that of the supplied Raft.java
  *  class. The purpose of this is so that i can keep track of the game state and
  *  play the game and plan ahead within my own Agent class with identical behavior 
- *  to that of the game engine. 
+ *  to that of the game engine. I added some boolean flags that indicate whether 
+ *  certain objects have been seen, allowing it to pick goals when searching. 
  *  
  *  The only other additional class used is the Node class. This is used
- *  during the search algorithm. The Node holds an Agent, cost and current
+ *  when executing Djikstra's. The Node holds an Agent, cost and current
  *  position. By keeping an Agent within each node we can easily find what
  *  moves legal from that particular state, track move history, and also keep 
- *  track of any resources that we have used on the path to that state. 
+ *  track of any resources that we have used on the path to that state. The cost
+ *  simply represents the number of different points on the map we have reached,
+ *  not the number of moves.
+ *  
+ *  
 */
 package ass3;
 
@@ -104,18 +115,18 @@ public class Agent {
     game_lost = false;
   }
   
+  /**
+   * This function chooses the next move our agent will take. 
+   * @param view - the current view of our agent that was sent from the game engine
+   * @return character representing the next desired move
+   */
   public char get_action( char view[][] ) {
 
-     // REPLACE THIS CODE WITH AI TO CHOOSE ACTION
-    updateMap(view);
-    //printMap(); 
-    int ch = 1;     
+    updateMap(view);  
     
     if (searching && on_raft) {
        this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'z', false, true);
-       System.out.println("water search worked");
        if (this.todo == "") {
-          System.out.println("finished water search");
           searching = false;
        }
     }
@@ -123,28 +134,24 @@ public class Agent {
     if (have_treasure && todo.length() == 0) {
        this.todo = djikstra(new Point(this.rowPos, this.colPos), new Point(START,START), false, false);
        if (this.todo == "" && num_dynamites > 0) {
-          System.out.println("have dynamites " + num_dynamites);
           this.todo = djikstra(new Point(this.rowPos, this.colPos), new Point(START,START), true, false);
        }
     }
     if (this.todo.length() == 0 && found_key && !have_key) {
        this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'k', false, false);
        if (this.todo == "" && num_dynamites > 0) {
-          System.out.println("have dynamites " + num_dynamites);
           this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'k', true, false);
         }
     }
     if (this.todo.length() == 0 && dynamites_seen > num_dynamites) {
        this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'd', false, false);
        if (this.todo == "" && num_dynamites > 0) {
-          System.out.println("have dynamites " + num_dynamites);
           this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'd', true, false);
         }
     }
     if (this.todo.length() == 0 && found_axe && !have_axe) {
        this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'a', false, false);
        if (this.todo == "" && num_dynamites > 0) {
-          System.out.println("have dynamites " + num_dynamites);
           this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'a', true, false);
        }
     }
@@ -167,6 +174,9 @@ public class Agent {
        }
     }
     
+    //sometimes in the initial stages we may return a goal position that is actually illegal
+    //once we receive more information. This makes sure we don't kill ourselves baesd on a
+    //previous uninformed search
     while (this.todo.length() != 0) {
         char c = todo.charAt(0);
         todo = todo.substring(1);
@@ -178,9 +188,7 @@ public class Agent {
         }
         if (searching && on_raft) {
            this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'z', false, true);
-           System.out.println("water search worked");
            if (this.todo == "") {
-              System.out.println("finished water search");
               searching = false;
            }
         }
@@ -188,28 +196,24 @@ public class Agent {
         if (have_treasure && todo.length() == 0) {
            this.todo = djikstra(new Point(this.rowPos, this.colPos), new Point(START,START), false, false);
            if (this.todo == "" && num_dynamites > 0) {
-              System.out.println("have dynamites " + num_dynamites);
               this.todo = djikstra(new Point(this.rowPos, this.colPos), new Point(START,START), true, false);
            }
         }
         if (this.todo.length() == 0 && found_key && !have_key) {
            this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'k', false, false);
            if (this.todo == "" && num_dynamites > 0) {
-              System.out.println("have dynamites " + num_dynamites);
               this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'k', true, false);
             }
         }
         if (this.todo.length() == 0 && dynamites_seen > num_dynamites) {
            this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'd', false, false);
            if (this.todo == "" && num_dynamites > 0) {
-              System.out.println("have dynamites " + num_dynamites);
               this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'd', true, false);
             }
         }
         if (this.todo.length() == 0 && found_axe && !have_axe) {
            this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'a', false, false);
            if (this.todo == "" && num_dynamites > 0) {
-              System.out.println("have dynamites " + num_dynamites);
               this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'a', true, false);
            }
         }
@@ -233,45 +237,44 @@ public class Agent {
         }     
      
     }
-
      
-     System.out.print("Enter Action(s): ");
-     
-     try {
-        while ( ch != -1 ) {
-           // read character from keyboard
-           ch  = System.in.read();
-
-           switch( ch ) { // if character is a valid action, return it
-           case 'F': case 'L': case 'R': case 'C': case 'U': case 'B':
-           case 'f': case 'l': case 'r': case 'c': case 'u': case 'b':
-              apply ((char) ch);
-              printMap();
-              return((char) ch );
-           }
-        }
-     }
-     catch (IOException e) {
-        System.out.println ("IO error:" + e );
-     }
-     
-     
-     return (char) ch;
+     return 'f';
   }
   
+  /**
+   * @return int - the current row position of agent
+   */
   public int getRowPos() {
      return rowPos;
   }
   
+  /**
+   * 
+   * @return int - the current column position of agent
+   */
   public int getColPos () {
      return colPos;
   }
   
+  /**
+   * 
+   * @return String - the moveHistory of this agent (for use during searching)
+   */
   public String getMoveHistory() {
      return moveHistory;
   }
 
 
+  /**
+   * Implementation of Djikstra in which we know the exact position of our goal
+   * this is used for returning to the starting position
+   * If the search is unsuccessful we return an empty string
+   * @param start - Point representing the starting position of search
+   * @param goal - Point that is the goal position
+   * @param allow_d - whether we are allowed to use dynamite on this search
+   * @param water_search - whether we are allowed to leave the water
+   * @return String representing the moves needed to reach the goal
+   */
   String djikstra(Point start, Point goal, boolean allow_d, boolean water_search) {
      HashMap<Point, Point> from = new HashMap<Point,Point>();
      HashMap<Point, Integer> dist = new HashMap<Point, Integer>();
@@ -281,7 +284,7 @@ public class Agent {
      int moves[][] = {{-1,0}, {1,0}, {0,-1}, {0,1}};
      int j;
      int i = 0;
-     int maxPops = 20000;
+     int maxPops = 20000; //maximum number of iterations before we cancel the search
      
      Node first = new Node(start, 0, 0, this.cloneAgent());
      Node curr = first;
@@ -299,6 +302,7 @@ public class Agent {
         }
         visited.add(curr.getPos());
         
+        //check and add surrounding squares to the queue
         for (j=0; j < 4; j++) {
            int x = (int) curr.getPos().getX() + moves[j][0];
            int y = (int) curr.getPos().getY() + moves[j][1];
@@ -309,19 +313,15 @@ public class Agent {
               int dCol = y - a.getColPos();
               String turn = "";
               if (dRow == -1) {
-                 //System.out.println(NORTH);
                  turn = a.moveSquare(NORTH);
               }
               else if (dRow == 1) {
-                 //System.out.println(SOUTH);
                  turn = a.moveSquare(SOUTH);
               }
               else if (dCol == -1) {
-                 //System.out.println(WEST);
                  turn = a.moveSquare(WEST);
               }
               else if (dCol == 1) {
-                 //System.out.println(EAST);
                  turn = a.moveSquare(EAST);
               }
               boolean broken = false;
@@ -342,7 +342,6 @@ public class Agent {
                  dist.put(p, toAdd.getCost());
                  q.add(toAdd);
               }
-              //System.out.println("added point " + p.toString());
            }
         }
         if (q.isEmpty()) {
@@ -352,17 +351,25 @@ public class Agent {
         i ++;
      }
      
-     if (i == maxPops) {
+     if (i == maxPops) { 
         return "";
      }
      if (!curr.getPos().equals(goal)) {
         return "";
      }
-     System.out.println(curr.getA().moveHistory);
-     System.out.println("dynamites remaining = " + num_dynamites);
      return curr.getA().moveHistory;
   }
   
+  /**
+   * Implementation of Djikstra in which don't know the grid position of our goal
+   * this is used for returning to the starting position
+   * If the search is unsuccessful we return an empty string
+   * @param start - Point representing the starting position of search
+   * @param goal - char that represents the goal square that we want to reach
+   * @param allow_d - whether we are allowed to use dynamite on this search
+   * @param water_search - whether we are allowed to leave the water
+   * @return String representing the moves needed to reach the goal
+   */
   String naiveDjikstra(Point start, char goal, boolean allow_d, boolean water_search) {
      HashMap<Point, Point> from = new HashMap<Point,Point>();
      HashMap<Point, Integer> dist = new HashMap<Point, Integer>();
@@ -397,11 +404,7 @@ public class Agent {
               break;
            }
         }
-        /*
-        if (visited.contains(curr.getPos())) {
-           continue;
-        }
-        */
+
         visited.add(curr.getPos());
         
         for (j=0; j < 4; j++) {
@@ -414,19 +417,15 @@ public class Agent {
               int dCol = y - a.getColPos();
               String turn = "";
               if (dRow == -1) {
-                 //System.out.println(NORTH);
                  turn = a.moveSquare(NORTH);
               }
               else if (dRow == 1) {
-                // System.out.println(SOUTH);
                  turn = a.moveSquare(SOUTH);
               }
               else if (dCol == -1) {
-                 //System.out.println(WEST);
                  turn = a.moveSquare(WEST);
               }
               else if (dCol == 1) {
-                 //System.out.println(EAST);
                  turn = a.moveSquare(EAST);
               }
               boolean broken = false;
@@ -448,7 +447,6 @@ public class Agent {
                  dist.put(p, toAdd.getCost());
                  q.add(toAdd);
               }
-              //System.out.println("added point " + p.toString());
            }
         }
         if (q.isEmpty()) {
@@ -459,19 +457,19 @@ public class Agent {
      }
      
      if (i == maxPops) {
-        System.out.println("hit maxpops couldn't find " + goal);
         return "";
      }
      if (!(map[(int) curr.getPos().getX()][(int) curr.getPos().getY()] == goal)) {
-        System.out.println("search failed couldn't find " + goal);
         return "";
      }
-     System.out.println("end pos is " + curr.getPos().toString());
-     System.out.println(curr.getA().moveHistory);
      return curr.getA().moveHistory;
   }
   
-  
+  /**
+   * 
+   * @param direction - represents NORTH, SOUTH, EAST, WEST direction we want to move to
+   * @return String representing the moves needed to move in desired direction
+   */
    String moveSquare(int direction) {
       String ret = "";
       int sRow = this.rowPos;
@@ -501,6 +499,14 @@ public class Agent {
       return ret;
    }
   
+   /**
+    * Checks whether we can move into a certain square
+    * @param row - the desired row position
+    * @param col - the desired column position 
+    * @param dynamites - boolean representing whether we can use dynamite
+    * @param water_search - boolean representing whether we are in water search phase
+    * @return boolean - true if we can move, false otherwise
+    */
    boolean canMove(int row, int col, boolean dynamites, boolean water_search) {
        char space = map[row][col];
        if (water_search && space != '~') {
@@ -528,7 +534,11 @@ public class Agent {
        return false;
    }
     
-    Agent cloneAgent () {
+   /**
+    * Returns a clone of itself
+    * @return Agent - clone of the agent that called this function
+    */
+   Agent cloneAgent () {
        Agent a = new Agent();
        
        a.rowPos = this.rowPos;
@@ -537,7 +547,6 @@ public class Agent {
        
        int i;
        int j;
-       //a.map = this.map.clone();
        
        for (i=0 ; i < 160; i++) {
           for (j=0; j< 160; j++) {
@@ -565,43 +574,36 @@ public class Agent {
        return a;
     }
     
-    int updateHeuristic() {
+   /**
+    * This didn't end up getting used as A* was never implemented
+    * @return heuristic value of this state
+    */
+   int updateHeuristic() {
        int sum = 0;      
-       if (found_treasure) {
-          sum += 100;
-       }
-       if (found_axe) {
-          sum += 50;
-       }
-       if (found_key) {
-          sum += 50;
-       }
-       sum += (dynamites_seen * 10);
-       if (have_axe) {
-          sum += 250;
-       }
        if (have_key) {
-          sum += 100;
+          sum += 20;
        }
        if (have_treasure) {
-          sum += 1000;
-       }
-       if (have_raft) {
           sum += 100;
        }
-       if (game_lost) {
-          sum -= 10000000;
+       /*
+       if (have_raft) {
+          sum += 20;
        }
-       if (game_won) {
-          sum += 100000000;
-       }
+       */
        sum += (num_dynamites * 20); // +50
-       //sum -= (moveHistory.length()*10);
        heuristic = sum;
        return sum;
     }
     
-   
+   /**
+    * I basically copied this from Raft.java and modified it slightly
+    * so that it would fit with my additional parameters. Use this function
+    * to increment our game state during searching and as we interact with 
+    * the game server
+    * @param action - char action to be applied
+    * @return - boolean as to whether action was successful
+    */
    private boolean apply( char action )
      {
         int d_row, d_col;
@@ -720,21 +722,11 @@ public class Agent {
         }
         return( false );
      }
-
   
-  
-  char inFront () {
-     char ch = ' ';
-     switch (dir) {
-     case NORTH: ch = map[rowPos-1][colPos]; break;
-     case EAST:  ch = map[rowPos][colPos+1]; break;
-     case SOUTH: ch = map[rowPos+1][colPos]; break; 
-     case WEST:  ch = map[rowPos][colPos-1]; break;
-     }
-     return ch;
-  }
-  
-  
+   /**
+    * Updates our map to include new information from the game server
+    * @param view - the new view information from game server
+    */
    void updateMap (char view[][]) 
    {
      int i; 
@@ -745,7 +737,6 @@ public class Agent {
          switch (c) {
            case '$': this.found_treasure = true; break;
            case 'a': this.found_axe      = true; break;
-           //case 'd': this.dynamites_seen     ++; break;
            case 'k': this.found_key      = true; break;
          }
          if (c == 'd') {
@@ -770,6 +761,9 @@ public class Agent {
      }
    }
    
+   /**
+    * prints our current map view to console - only used during debugging
+    */
    void printMap () {
     int i,j;
 
@@ -797,6 +791,10 @@ public class Agent {
       System.out.println("+-----+");
    }
   
+   /**
+    * prints the current view to console - only used during debugging
+    * @param view - our Agents current view
+    */
    void print_view( char view[][] )
    {
       int i,j;
@@ -817,6 +815,10 @@ public class Agent {
       System.out.println("+-----+");
    }
 
+   /**
+    * receive info from game engine then choose next action
+    * @param args
+    */
    public static void main( String[] args )
    {
       InputStream in  = null;
@@ -859,8 +861,7 @@ public class Agent {
                   }
                }
             }
-           // agent.print_view( view ); // COMMENT THIS OUT BEFORE SUBMISSION
-            //agent.printMap();
+
             action = agent.get_action( view );
             out.write( action );
          }
