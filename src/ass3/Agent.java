@@ -1,8 +1,27 @@
 /*********************************************
  *  Agent.java 
- *  Sample Agent for Text-Based Adventure Game
+ *  Nathaniel Henry z3419400 Submission
  *  COMP3411 Artificial Intelligence
  *  UNSW Session 1, 2017
+ *  
+ *  Program Description
+ *  
+ *  My Agent uses the following broad techniques to 
+ *  
+ *  The primary search algorithm used is djikstra's, I implemented
+ *  two versions of this; 1 searches for a specific point e.g.(80,80), the
+ *  other searches for any space that contains a particular value.
+ *  
+ *  The Agent class holds similar information to that of the supplied Raft.java
+ *  class. The purpose of this is so that i can keep track of the game state and
+ *  play the game and plan ahead within my own Agent class with identical behavior 
+ *  to that of the game engine. 
+ *  
+ *  The only other additional class used is the Node class. This is used
+ *  during the search algorithm. The Node holds an Agent, cost and current
+ *  position. By keeping an Agent within each node we can easily find what
+ *  moves legal from that particular state, track move history, and also keep 
+ *  track of any resources that we have used on the path to that state. 
 */
 package ass3;
 
@@ -100,6 +119,16 @@ public class Agent {
           searching = false;
        }
     }
+    if (todo.length() == 0) {
+       this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'z', false, false);
+       /*
+       if (this.todo == "") {
+          System.out.println("have dynamites " + num_dynamites);
+          this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'z', true, false);
+       }
+       */
+
+   }
     if (have_treasure && todo.length() == 0) {
        this.todo = djikstra(new Point(this.rowPos, this.colPos), new Point(START,START), false, false);
        if (this.todo == "") {
@@ -133,16 +162,7 @@ public class Agent {
        
     }
     
-    if (todo.length() == 0) {
-        this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'z', false, false);
-        /*
-        if (this.todo == "") {
-           System.out.println("have dynamites " + num_dynamites);
-           this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'z', true, false);
-        }
-        */
-
-    }
+    
     if (todo.length() == 0 && !have_raft && have_axe) {
        this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'T', false, false);
     }
@@ -164,6 +184,15 @@ public class Agent {
               searching = false;
            }
         }
+        if (todo.length() == 0) {
+           this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'z', false, false);
+           /*
+           if (this.todo == "") {
+              System.out.println("have dynamites " + num_dynamites);
+              this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'z', true, false);
+           }
+           */
+       }
         if (have_treasure && todo.length() == 0) {
            this.todo = djikstra(new Point(this.rowPos, this.colPos), new Point(START,START), false, false);
            if (this.todo == "") {
@@ -197,15 +226,7 @@ public class Agent {
            
         }
         
-        if (todo.length() == 0) {
-            this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'z', false, false);
-            /*
-            if (this.todo == "") {
-               System.out.println("have dynamites " + num_dynamites);
-               this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'z', true, false);
-            }
-            */
-        }
+        
         if (todo.length() == 0 && !have_raft && have_axe) {
            this.todo = naiveDjikstra(new Point(this.rowPos, this.colPos), 'T', false, false);
         }      
@@ -362,7 +383,19 @@ public class Agent {
         curr = q.poll();
         
         if (map[(int) curr.getPos().getX()][(int) curr.getPos().getY()] == goal) {
-           break;
+           if (goal == '$') {
+              String homePath = curr.getA().djikstra(curr.getPos(), new Point (START,START), true, false);
+              if (homePath == "") {
+                 continue;
+              }
+              else {
+                 curr.getA().moveHistory += homePath;
+                 break;
+              }
+           }
+           else {
+              break;
+           }
         }
         /*
         if (visited.contains(curr.getPos())) {
@@ -713,15 +746,26 @@ public class Agent {
          switch (c) {
            case '$': this.found_treasure = true; break;
            case 'a': this.found_axe      = true; break;
-           case 'd': this.dynamites_seen     ++; break;
+           //case 'd': this.dynamites_seen     ++; break;
            case 'k': this.found_key      = true; break;
          }
-         
+         if (c == 'd') {
+            char square = ' ';
+            switch (dir) {
+            case NORTH: square = this.map[rowPos-2 + i][colPos-2+j]; break;
+            case EAST:  square = this.map[rowPos-2 + j][colPos+2-i]; break;
+            case SOUTH: square = this.map[rowPos+2 - i][colPos+2-j]; break;
+            case WEST:  square = this.map[rowPos+2 - j][colPos-2+i]; break;
+            }
+            if (square != 'd') {
+               this.dynamites_seen ++;
+            }
+         }         
           switch (dir) {
-           case NORTH: this.map[rowPos-2 + i][colPos-2+j] = view[i][j]; break;
-           case EAST:  this.map[rowPos-2 + j][colPos+2-i] = view[i][j]; break;
-           case SOUTH: this.map[rowPos+2 - i][colPos+2-j] = view[i][j]; break;
-           case WEST:  this.map[rowPos+2 - j][colPos-2+i] = view[i][j]; break;         
+           case NORTH: this.map[rowPos-2 + i][colPos-2+j] = c; break;
+           case EAST:  this.map[rowPos-2 + j][colPos+2-i] = c; break;
+           case SOUTH: this.map[rowPos+2 - i][colPos+2-j] = c; break;
+           case WEST:  this.map[rowPos+2 - j][colPos-2+i] = c; break;         
          }
        }
      }
